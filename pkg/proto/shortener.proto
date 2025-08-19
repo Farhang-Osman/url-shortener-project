@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package shortener;
+
+option go_package = "./shortenerpb";
+
+service ShortenerService {
+  rpc ShortenURL (ShortenURLRequest) returns (ShortenURLResponse);
+  rpc GetOriginalURL (GetOriginalURLRequest) returns (GetOriginalURLResponse);
+  rpc UpdateURLDestination (UpdateURLDestinationRequest) returns (UpdateURLDestinationResponse);
+}
+
+message ShortenURLRequest {
+  string long_url = 1;
+  string custom_alias = 2; // Optional
+  string expires_at = 3; // Optional: ISO 8601 format string
+  string user_id = 4; // Optional: For authenticated users
+}
+
+message ShortenURLResponse {
+  string short_code = 1;
+}
+
+message GetOriginalURLRequest {
+  string short_code = 1;
+}
+
+message GetOriginalURLResponse {
+  string long_url = 1;
+  string expires_at = 2; // Optional: ISO 8601 format string
+}
+
+message UpdateURLDestinationRequest {
+  string short_code = 1;
+  string new_long_url = 2;
+  string user_id = 3; // For authorization check
+}
+
+message UpdateURLDestinationResponse {
+  string short_code = 1;
+  string message = 2;
+}
