@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package shortener;
 
-option go_package = "./shortenerpb";
+option go_package = "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb";
 
 service ShortenerService {
   rpc ShortenURL (ShortenURLRequest) returns (ShortenURLResponse);

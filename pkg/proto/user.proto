@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package user;
 
-option go_package = "./userpb";
+option go_package = "github.com/Farhang-Osman/url-shortener-project/pkg/proto/userpb";
 
 service UserService {
   rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse);
