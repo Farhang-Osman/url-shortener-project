@@ -1,4 +1,4 @@
-module github.com/Farhang-Osman/url-shortener-project/user-service
+module github.com/Farhang-Osman/url-shortener-project/shortener-service
 
 go 1.24.6
 
