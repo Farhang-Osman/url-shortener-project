@@ -47,12 +47,12 @@ func (s *server) ValidateToken(ctx context.Context, req *userpb.ValidateTokenReq
 	// For now, just return a dummy response
 	if req.GetToken() == "dummy-jwt-token" {
 		return &userpb.ValidateTokenResponse{
-			IsVaild: true,
+			IsValid: true,
 			UserId:  "user-dummy",
 		}, nil
 	}
 	return &userpb.ValidateTokenResponse{
-		IsVaild: false,
+		IsValid: false,
 		UserId:  "",
 	}, status.Errorf(codes.Unauthenticated, "invalid token")
 }

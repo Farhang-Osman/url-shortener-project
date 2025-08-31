@@ -76,7 +76,7 @@ func (a *apiGateway) authMiddleware(next http.Handler) http.Handler {
 			defer cancel()
 
 			resp, err := a.userClient.ValidateToken(ctx, &userpb.ValidateTokenRequest{Token: token})
-			if err != nil || !resp.GetIsVaild() {
+			if err != nil || !resp.GetIsValid() {
 				log.Printf("Token validation failed: %v", err)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return

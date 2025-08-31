@@ -5,7 +5,7 @@ FROM golang:1.24-alpine AS builder
 WORKDIR /app
 
 # Copy go.mod and go.sum files and download dependencies
-COPY go.mod go.sum ./ # Copy main go.mod/go.sum
+COPY go.mod go.sum ./
 COPY pkg/proto/go.mod pkg/proto/go.sum ./pkg/proto/
 COPY analytics-service/go.mod analytics-service/go.sum ./analytics-service/
 
@@ -27,7 +27,8 @@ WORKDIR /root/
 COPY --from=builder /app/analytics-service/main .
 
 # Expose the port the service listens on
-EXPOSE 50053 # Assuming this service might expose a health check or metrics endpoint
+# Assuming this service might expose a health check or metrics endpoint
+EXPOSE 50053
 
 # Command to run the executable
 CMD ["./main"]

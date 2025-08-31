@@ -5,7 +5,7 @@ FROM golang:1.24-alpine AS builder
 WORKDIR /app
 
 # Copy go.mod and go.sum files and download dependencies
-COPY go.mod go.sum ./ # Copy main go.mod/go.sum
+COPY go.mod go.sum ./
 COPY pkg/proto/go.mod pkg/proto/go.sum ./pkg/proto/
 COPY user-service/go.mod user-service/go.sum ./user-service/
 
