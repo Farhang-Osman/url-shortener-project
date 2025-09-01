@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redirect-service-deployment
+  labels:
+    app: redirect-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redirect-service
+  template:
+    metadata:
+      labels:
+        app: redirect-service
+    spec:
+      containers:
+        - name: redirect-service
+          image: url-shortener/redirect-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SHORTENER_SERVICE_ADDR
+              value: "shortener-service:50052"
+            - name: KAFKA_BROKER
+              value: "kafka-service:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redirect-service
+spec:
+  selector:
+    app: redirect-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer # Expose to external traffic

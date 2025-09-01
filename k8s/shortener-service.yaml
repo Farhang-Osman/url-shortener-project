@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shortener-service-deployment
+  labels:
+    app: shortener-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shortener-service
+  template:
+    metadata:
+      labels:
+        app: shortener-service
+    spec:
+      containers:
+        - name: shortener-service
+          image: url-shortener/shortener-service:latest
+          ports:
+            - containerPort: 50052
+          env:
+            - name: DATABASE_URL
+              value: "postgres://postgres:mysecretpassword@postgres-service:5432/postgres"
+            - name: KAFKA_BROKER
+              value: "kafka-service:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shortener-service
+spec:
+  selector:
+    app: shortener-service
+  ports:
+    - protocol: TCP
+      port: 50052
+      targetPort: 50052
+  type: ClusterIP
