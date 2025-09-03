@@ -64,6 +64,6 @@ func main() {
 
 	}).Methods("GET")
 
-	log.Printf("Redirect Service listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Printf("Redirect Service listening on :8081")
+	log.Fatal(http.ListenAndServe(":8081", r))
 }

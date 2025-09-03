@@ -119,7 +119,7 @@ func (a *apiGateway) shortenURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"short_url": "http://localhost:8080/" + res.GetShortCode()})
+	json.NewEncoder(w).Encode(map[string]string{"short_url": "http://localhost:8081/" + res.GetShortCode()})
 }
 
 func (a *apiGateway) updateURLDestinationHandler(w http.ResponseWriter, r *http.Request) {
