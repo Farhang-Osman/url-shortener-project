@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	kakfaBroker = "localhost:9092" // Assuming Kafka is running locally
+	kafkaBroker = "localhost:9092" // Assuming Kafka is running locally
 	clickTopic  = "url-click-events"
 	createTopic = "url-created-events"
 )
@@ -19,7 +19,7 @@ const (
 func main() {
 	// Create a new Kafka reader for click events
 	rClick := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{kakfaBroker},
+		Brokers:  []string{kafkaBroker},
 		Topic:    clickTopic,
 		GroupID:  "analytics-consumer-group",
 		MinBytes: 10e3, // 10KB
@@ -28,7 +28,7 @@ func main() {
 
 	// Create a new Kafka reader for create events (optional)
 	rCreate := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{kakfaBroker},
+		Brokers:  []string{kafkaBroker},
 		Topic:    createTopic,
 		GroupID:  "analytics-consumer-group",
 		MinBytes: 10e3, // 10KB
