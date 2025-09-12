@@ -2,112 +2,184 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"database/sql"
 	"log"
 	"net"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb" // IMPORTANT: Use your main module path
+	db "github.com/Farhang-Osman/url-shortener-project/common/db"
+	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb"
 )
 
-// server is used to implement shortenerpb.ShortenerServiceServer.
 type server struct {
 	shortenerpb.UnimplementedShortenerServiceServer
-	// In a real application, this would be a database client
-	urlStore map[string]*shortenerpb.ShortenURLRequest // Dummy store
 }
 
-func newServer() *server {
-	return &server{
-		urlStore: make(map[string]*shortenerpb.ShortenURLRequest),
-	}
-}
-
-// ShortenURL implements shortenerpb.ShortenerServiceServer
 func (s *server) ShortenURL(ctx context.Context, req *shortenerpb.ShortenURLRequest) (*shortenerpb.ShortenURLResponse, error) {
 	log.Printf("Received ShortenURL request: %v\n", req.GetLongUrl())
 
-	shortCode := req.GetCustomAlias()
-	if shortCode == "" {
-		// TODO: Implement actual short code generation logic (e.g., base62 encoding of a unique ID)
-		shortCode = fmt.Sprintf("short-%d", time.Now().UnixNano())
+	// Generate short code (use custom alias if provided)
+	var shortCode string
+	if req.GetCustomAlias() != "" {
+		shortCode = req.GetCustomAlias()
+
+		// Check if custom alias already exists
+		var exists bool
+		err := db.DB.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM urls WHERE short_code = $1)", shortCode).Scan(&exists)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "database error: %v", err)
+		}
+		if exists {
+			return nil, status.Errorf(codes.AlreadyExists, "custom alias already exists")
+		}
+	} else {
+		// Generate random short code and ensure it's unique
+		for {
+			shortCode = generateShortCode()
+			var exists bool
+			err := db.DB.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM urls WHERE short_code = $1)", shortCode).Scan(&exists)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "database error: %v", err)
+			}
+			if !exists {
+				break
+			}
+		}
 	}
 
-	if _, exists := s.urlStore[shortCode]; exists {
-		return nil, status.Errorf(codes.AlreadyExists, "short code %s already exists", shortCode)
+	// Parse expires_at if provided
+	var expiresAt *time.Time
+	if req.GetExpiresAt() != "" {
+		parsedTime, err := parseExpiresAt(req.GetExpiresAt())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid expires_at format: %v", err)
+		}
+		expiresAt = parsedTime
 	}
 
-	s.urlStore[shortCode] = req // Store the request for later lookup
+	// Insert URL into database
+	var userID *string
+	if req.GetUserId() != "" {
+		userID = &req.UserId
+	}
 
-	log.Printf("Shortened %s to %s\n", req.GetLongUrl(), shortCode)
+	_, err := db.DB.Exec(ctx,
+		"INSERT INTO urls (short_code, long_url, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4, $5)",
+		shortCode, req.GetLongUrl(), userID, expiresAt, time.Now())
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to store URL: %v", err)
+	}
+
+	log.Printf("URL shortened successfully: %s -> %s", req.GetLongUrl(), shortCode)
+
 	return &shortenerpb.ShortenURLResponse{
 		ShortCode: shortCode,
 	}, nil
 }
 
-// GetOriginalURL implements shortenerpb.ShortenerServiceServer
 func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOriginalURLRequest) (*shortenerpb.GetOriginalURLResponse, error) {
 	log.Printf("Received GetOriginalURL request: %v\n", req.GetShortCode())
 
-	storedReq, ok := s.urlStore[req.GetShortCode()]
-	if !ok {
-		return nil, status.Errorf(codes.NotFound, "short code %s not found", req.GetShortCode())
+	// Query database for the URL
+	var longURL string
+	var expiresAt sql.NullTime
+	err := db.DB.QueryRow(ctx,
+		"SELECT long_url, expires_at FROM urls WHERE short_code = $1",
+		req.GetShortCode()).Scan(&longURL, &expiresAt)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "short URL not found")
+		}
+		return nil, status.Errorf(codes.Internal, "database error: %v", err)
 	}
 
-	// Check for expiration
-	if storedReq.GetExpiresAt() != "" {
-		expiresAt, err := time.Parse(time.RFC3339, storedReq.GetExpiresAt())
-		if err != nil {
-			log.Printf("Error parsing expires_at: %v", err)
-			// Treat as expired if parsing fails for simplicity in dummy
-			return nil, status.Errorf(codes.Internal, "invalid expiration format")
-		}
-		if time.Now().After(expiresAt) {
-			return nil, status.Errorf(codes.NotFound, "short code %s has expired", req.GetShortCode())
-		}
+	// Check if URL has expired
+	if expiresAt.Valid && expiresAt.Time.Before(time.Now()) {
+		return nil, status.Errorf(codes.NotFound, "short URL has expired")
 	}
 
-	log.Printf("Found original URL for %s: %s\n", req.GetShortCode(), storedReq.GetLongUrl())
+	// Update click count
+	_, err = db.DB.Exec(ctx,
+		"UPDATE urls SET click_count = click_count + 1, last_accessed = $1 WHERE short_code = $2",
+		time.Now(), req.GetShortCode())
+	if err != nil {
+		log.Printf("Warning: failed to update click count: %v", err)
+		// Don't fail the request for this
+	}
+
+	var expiresAtStr string
+	if expiresAt.Valid {
+		expiresAtStr = formatExpiresAt(&expiresAt.Time)
+	}
+
 	return &shortenerpb.GetOriginalURLResponse{
-		LongUrl:   storedReq.GetLongUrl(),
-		ExpiresAt: storedReq.GetExpiresAt(),
+		LongUrl:   longURL,
+		ExpiresAt: expiresAtStr,
 	}, nil
 }
 
-// UpdateURLDestination implements shortenerpb.ShortenerServiceServer
 func (s *server) UpdateURLDestination(ctx context.Context, req *shortenerpb.UpdateURLDestinationRequest) (*shortenerpb.UpdateURLDestinationResponse, error) {
-	log.Printf("Received UpdateURLDestination request for %v\n", req.GetShortCode())
+	log.Printf("Received UpdateURLDestination request: %v\n", req.GetShortCode())
 
-	storedReq, ok := s.urlStore[req.GetShortCode()]
-	if !ok {
-		return nil, status.Errorf(codes.NotFound, "short code %s not found", req.GetShortCode())
+	// Check if the URL exists and belongs to the user
+	var currentUserID sql.NullString
+	err := db.DB.QueryRow(ctx,
+		"SELECT user_id FROM urls WHERE short_code = $1",
+		req.GetShortCode()).Scan(&currentUserID)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "short URL not found")
+		}
+		return nil, status.Errorf(codes.Internal, "database error: %v", err)
 	}
 
-	// TODO: Implement actual user_id authorization check against storedReq.GetUserId()
-	// For this dummy, we'll assume the user_id is correct or not checked.
+	// Check authorization - only the owner can update
+	if !currentUserID.Valid || currentUserID.String != req.GetUserId() {
+		return nil, status.Errorf(codes.PermissionDenied, "you can only update your own URLs")
+	}
 
-	storedReq.LongUrl = req.GetNewLongUrl()
-	s.urlStore[req.GetShortCode()] = storedReq // Update the dummy store
+	// Update the URL destination
+	result, err := db.DB.Exec(ctx,
+		"UPDATE urls SET long_url = $1, updated_at = $2 WHERE short_code = $3",
+		req.GetNewLongUrl(), time.Now(), req.GetShortCode())
 
-	log.Printf("Updated %s to new URL %s\n", req.GetShortCode(), req.GetNewLongUrl())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update URL: %v", err)
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return nil, status.Errorf(codes.NotFound, "short URL not found")
+	}
+
 	return &shortenerpb.UpdateURLDestinationResponse{
 		ShortCode: req.GetShortCode(),
-		Message:   "URL updated successfully (dummy)",
+		Message:   "URL destination updated successfully",
 	}, nil
 }
 
 func main() {
-	lis, err := net.Listen("tcp", ":50052") // Listen on port 50052
+	// Initialize database connection pool
+	if err := db.InitDB(); err != nil {
+		log.Fatalf("failed to initialize database: %v", err)
+	}
+	defer db.CloseDB()
+
+	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	shortenerpb.RegisterShortenerServiceServer(s, newServer())
+	shortenerpb.RegisterShortenerServiceServer(s, &server{})
 
 	log.Printf("Shortener Service listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
