@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20250822173454-061879e34199
 	github.com/gorilla/mux v1.8.1
-	google.golang.org/grpc v1.75.0
+	google.golang.org/grpc v1.75.1
 )
 
 require (
