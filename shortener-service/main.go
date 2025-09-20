@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/segmentio/kafka-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -132,7 +133,41 @@ func (s *server) ShortenURL(ctx context.Context, req *shortenerpb.ShortenURLRequ
 	}, nil
 }
 
-// ... (keep the rest of your existing GetOriginalURL and UpdateURLDestination functions unchanged)
+func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOriginalURLRequest) (*shortenerpb.GetOriginalURLResponse, error) {
+	log.Printf("Received GetOriginalURL request for short code: %s\n", req.GetShortCode())
+
+	var longURL string
+	var expiresAt *time.Time
+
+	// Query database for original URL and expiration date
+	row := db.DB.QueryRow(ctx, "SELECT long_url, expires_at FROM urls WHERE short_code = $1", req.GetShortCode())
+
+	err := row.Scan(&longURL, &expiresAt)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "short code not found")
+		}
+		return nil, status.Errorf(codes.Internal, "database error: %v", err)
+	}
+
+	// Check if URL has expired
+	if expiresAt != nil && time.Now().After(*expiresAt) {
+		return nil, status.Errorf(codes.NotFound, "short code has expired")
+	}
+
+	log.Printf("Found original URL for %s: %s", req.GetShortCode(), longURL)
+
+	var expiresAtStr string
+	if expiresAt != nil {
+		expiresAtStr = expiresAt.Format(time.RFC3339)
+	}
+
+	return &shortenerpb.GetOriginalURLResponse{
+		LongUrl:   longURL,
+		ExpiresAt: expiresAtStr,
+	}, nil
+}
 
 func main() {
 	// Initialize database connection pool

@@ -2,22 +2,42 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/segmentio/kafka-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb" // IMPORTANT: Use your main module path
+	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb"
 )
 
 const (
 	shortenerServiceAddr = "localhost:50052"
+	kafkaBroker          = "localhost:9092"
+	clickedTopic         = "url-clicked-events"
 )
 
+type URLClickedEvent struct {
+	ShortCode string    `json:"short_code"`
+	ClickedAt time.Time `json:"clicked_at"`
+	IPAddress string    `json:"ip_address"`
+	UserAgent string    `json:"user_agent"`
+	Referer   string    `json:"referer"`
+}
+
 func main() {
+	// Initialize Kafka writer
+	kW := &kafka.Writer{
+		Addr:     kafka.TCP(kafkaBroker),
+		Topic:    clickedTopic,
+		Balancer: &kafka.LeastBytes{},
+	}
+	defer kW.Close()
+
 	// Set up a connection to the Shortener Service
 	conn, err := grpc.Dial(shortenerServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -47,18 +67,33 @@ func main() {
 		}
 
 		longURL := res.GetLongUrl()
-		expiresAt := res.GetExpiresAt()
 
-		// Check for expiration (redundant with Shortener Service, but good for robustness)
-		if expiresAt != "" {
-			exp, parseErr := time.Parse(time.RFC3339, expiresAt)
-			if parseErr == nil && time.Now().After(exp) {
-				http.Error(w, "Short URL has expired", http.StatusNotFound)
-				return
+		// Publish click event to Kafka here
+		clientIP := r.RemoteAddr
+		userAgent := r.Header.Get("User-Agent")
+		referer := r.Header.Get("Referer")
+		event := URLClickedEvent{
+			ShortCode: shortCode,
+			ClickedAt: time.Now(),
+			IPAddress: clientIP,
+			UserAgent: userAgent,
+			Referer:   referer,
+		}
+
+		eventBytes, err := json.Marshal(event)
+		if err != nil {
+			log.Printf("Warning: failed to marshal URL clicked event: %v", err)
+		} else {
+			err = kW.WriteMessages(r.Context(), kafka.Message{
+				Value: eventBytes,
+			})
+			if err != nil {
+				log.Printf("Warning: failed to publish URL clicked event to Kafka: %v", err)
+			} else {
+				log.Printf("Published URL clicked event to Kafka for short code: %s", shortCode)
 			}
 		}
 
-		// TODO: Publish click event to Kafka here
 		log.Printf("Redirecting %s to %s\n", shortCode, longURL)
 		http.Redirect(w, r, longURL, http.StatusFound)
 
