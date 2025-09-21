@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net"
 	"time"
 
 	"github.com/segmentio/kafka-go"
@@ -14,7 +15,7 @@ import (
 const (
 	kafkaBroker  = "localhost:9092" // Kafka broker address
 	createdTopic = "url-created-events"
-	clickTopic   = "url-click-events"
+	clickedTopic = "url-clicked-events"
 )
 
 type URLCreatedEvent struct {
@@ -65,7 +66,7 @@ func main() {
 	clickReader := kafka.NewReader(
 		kafka.ReaderConfig{
 			Brokers:   []string{kafkaBroker},
-			Topic:     clickTopic,
+			Topic:     clickedTopic,
 			GroupID:   "analytics-click-group",
 			Partition: 0,
 			MinBytes:  10e3, // 10KB
@@ -129,10 +130,17 @@ func main() {
 
 			log.Printf("Received URL Clicked Event: ShortCode=%s, IP=%s", event.ShortCode, event.IPAddress)
 
+			// Extract IP address without port
+			host, _, err := net.SplitHostPort(event.IPAddress)
+			if err != nil {
+				log.Printf("Warning: failed to split host and port from IPAddress %s: %v", event.IPAddress, err)
+				host = event.IPAddress // Fallback to original if split fails
+			}
+
 			// Store in analytics table
 			_, err = db.DB.Exec(ctx,
 				"INSERT INTO analytics (event_type, short_code, user_agent, referer, ip_address, timestamp) VALUES ($1, $2, $3, $4, $5, $6)",
-				"url_clicked", event.ShortCode, event.UserAgent, event.Referer, event.IPAddress, event.ClickedAt)
+				"url_clicked", event.ShortCode, event.UserAgent, event.Referer, host, event.ClickedAt)
 			if err != nil {
 				log.Printf("Error storing click event in DB: %v", err)
 			} else {
