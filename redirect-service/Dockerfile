@@ -27,7 +27,7 @@ WORKDIR /root/
 COPY --from=builder /app/redirect-service/main .
 
 # Expose the port the service listens on
-EXPOSE 8080
+EXPOSE 8081
 
 # Command to run the executable
 CMD ["./main"]
