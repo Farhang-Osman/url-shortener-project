@@ -341,6 +341,210 @@ func (x *UpdateURLDestinationResponse) GetMessage() string {
 	return ""
 }
 
+type AnalyticsData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventType     string                 `protobuf:"bytes,1,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
+	ShortCode     string                 `protobuf:"bytes,2,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
+	LongUrl       string                 `protobuf:"bytes,3,opt,name=long_url,json=longUrl,proto3" json:"long_url,omitempty"`       // Only for url_created events
+	UserId        string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`          // Only for url_created events
+	UserAgent     string                 `protobuf:"bytes,5,opt,name=user_agent,json=userAgent,proto3" json:"user_agent,omitempty"` // Only for url_clicked events
+	Referer       string                 `protobuf:"bytes,6,opt,name=referer,proto3" json:"referer,omitempty"`                      // Only for url_clicked events
+	IpAddress     string                 `protobuf:"bytes,7,opt,name=ip_address,json=ipAddress,proto3" json:"ip_address,omitempty"`
+	Timestamp     string                 `protobuf:"bytes,8,opt,name=timestamp,proto3" json:"timestamp,omitempty"` // ISO 8601 format string
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AnalyticsData) Reset() {
+	*x = AnalyticsData{}
+	mi := &file_shortener_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyticsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyticsData) ProtoMessage() {}
+
+func (x *AnalyticsData) ProtoReflect() protoreflect.Message {
+	mi := &file_shortener_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyticsData.ProtoReflect.Descriptor instead.
+func (*AnalyticsData) Descriptor() ([]byte, []int) {
+	return file_shortener_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AnalyticsData) GetEventType() string {
+	if x != nil {
+		return x.EventType
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetShortCode() string {
+	if x != nil {
+		return x.ShortCode
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetLongUrl() string {
+	if x != nil {
+		return x.LongUrl
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetUserAgent() string {
+	if x != nil {
+		return x.UserAgent
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetReferer() string {
+	if x != nil {
+		return x.Referer
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetIpAddress() string {
+	if x != nil {
+		return x.IpAddress
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+type GetURLAnalyticsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ShortCode     string                 `protobuf:"bytes,1,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // For authorization check
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetURLAnalyticsRequest) Reset() {
+	*x = GetURLAnalyticsRequest{}
+	mi := &file_shortener_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetURLAnalyticsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetURLAnalyticsRequest) ProtoMessage() {}
+
+func (x *GetURLAnalyticsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shortener_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetURLAnalyticsRequest.ProtoReflect.Descriptor instead.
+func (*GetURLAnalyticsRequest) Descriptor() ([]byte, []int) {
+	return file_shortener_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetURLAnalyticsRequest) GetShortCode() string {
+	if x != nil {
+		return x.ShortCode
+	}
+	return ""
+}
+
+func (x *GetURLAnalyticsRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetURLAnalyticsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Analytics     []*AnalyticsData       `protobuf:"bytes,1,rep,name=analytics,proto3" json:"analytics,omitempty"`
+	TotalClicks   int64                  `protobuf:"varint,2,opt,name=total_clicks,json=totalClicks,proto3" json:"total_clicks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetURLAnalyticsResponse) Reset() {
+	*x = GetURLAnalyticsResponse{}
+	mi := &file_shortener_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetURLAnalyticsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetURLAnalyticsResponse) ProtoMessage() {}
+
+func (x *GetURLAnalyticsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shortener_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetURLAnalyticsResponse.ProtoReflect.Descriptor instead.
+func (*GetURLAnalyticsResponse) Descriptor() ([]byte, []int) {
+	return file_shortener_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetURLAnalyticsResponse) GetAnalytics() []*AnalyticsData {
+	if x != nil {
+		return x.Analytics
+	}
+	return nil
+}
+
+func (x *GetURLAnalyticsResponse) GetTotalClicks() int64 {
+	if x != nil {
+		return x.TotalClicks
+	}
+	return 0
+}
+
 var File_shortener_proto protoreflect.FileDescriptor
 
 const file_shortener_proto_rawDesc = "" +
@@ -371,12 +575,33 @@ const file_shortener_proto_rawDesc = "" +
 	"\x1cUpdateURLDestinationResponse\x12\x1d\n" +
 	"\n" +
 	"short_code\x18\x01 \x01(\tR\tshortCode\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage2\x9d\x02\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\xf7\x01\n" +
+	"\rAnalyticsData\x12\x1d\n" +
+	"\n" +
+	"event_type\x18\x01 \x01(\tR\teventType\x12\x1d\n" +
+	"\n" +
+	"short_code\x18\x02 \x01(\tR\tshortCode\x12\x19\n" +
+	"\blong_url\x18\x03 \x01(\tR\alongUrl\x12\x17\n" +
+	"\auser_id\x18\x04 \x01(\tR\x06userId\x12\x1d\n" +
+	"\n" +
+	"user_agent\x18\x05 \x01(\tR\tuserAgent\x12\x18\n" +
+	"\areferer\x18\x06 \x01(\tR\areferer\x12\x1d\n" +
+	"\n" +
+	"ip_address\x18\a \x01(\tR\tipAddress\x12\x1c\n" +
+	"\ttimestamp\x18\b \x01(\tR\ttimestamp\"P\n" +
+	"\x16GetURLAnalyticsRequest\x12\x1d\n" +
+	"\n" +
+	"short_code\x18\x01 \x01(\tR\tshortCode\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"t\n" +
+	"\x17GetURLAnalyticsResponse\x126\n" +
+	"\tanalytics\x18\x01 \x03(\v2\x18.shortener.AnalyticsDataR\tanalytics\x12!\n" +
+	"\ftotal_clicks\x18\x02 \x01(\x03R\vtotalClicks2\xf7\x02\n" +
 	"\x10ShortenerService\x12I\n" +
 	"\n" +
 	"ShortenURL\x12\x1c.shortener.ShortenURLRequest\x1a\x1d.shortener.ShortenURLResponse\x12U\n" +
 	"\x0eGetOriginalURL\x12 .shortener.GetOriginalURLRequest\x1a!.shortener.GetOriginalURLResponse\x12g\n" +
-	"\x14UpdateURLDestination\x12&.shortener.UpdateURLDestinationRequest\x1a'.shortener.UpdateURLDestinationResponseBFZDgithub.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpbb\x06proto3"
+	"\x14UpdateURLDestination\x12&.shortener.UpdateURLDestinationRequest\x1a'.shortener.UpdateURLDestinationResponse\x12X\n" +
+	"\x0fGetURLAnalytics\x12!.shortener.GetURLAnalyticsRequest\x1a\".shortener.GetURLAnalyticsResponseBFZDgithub.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpbb\x06proto3"
 
 var (
 	file_shortener_proto_rawDescOnce sync.Once
@@ -390,7 +615,7 @@ func file_shortener_proto_rawDescGZIP() []byte {
 	return file_shortener_proto_rawDescData
 }
 
-var file_shortener_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_shortener_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_shortener_proto_goTypes = []any{
 	(*ShortenURLRequest)(nil),            // 0: shortener.ShortenURLRequest
 	(*ShortenURLResponse)(nil),           // 1: shortener.ShortenURLResponse
@@ -398,19 +623,25 @@ var file_shortener_proto_goTypes = []any{
 	(*GetOriginalURLResponse)(nil),       // 3: shortener.GetOriginalURLResponse
 	(*UpdateURLDestinationRequest)(nil),  // 4: shortener.UpdateURLDestinationRequest
 	(*UpdateURLDestinationResponse)(nil), // 5: shortener.UpdateURLDestinationResponse
+	(*AnalyticsData)(nil),                // 6: shortener.AnalyticsData
+	(*GetURLAnalyticsRequest)(nil),       // 7: shortener.GetURLAnalyticsRequest
+	(*GetURLAnalyticsResponse)(nil),      // 8: shortener.GetURLAnalyticsResponse
 }
 var file_shortener_proto_depIdxs = []int32{
-	0, // 0: shortener.ShortenerService.ShortenURL:input_type -> shortener.ShortenURLRequest
-	2, // 1: shortener.ShortenerService.GetOriginalURL:input_type -> shortener.GetOriginalURLRequest
-	4, // 2: shortener.ShortenerService.UpdateURLDestination:input_type -> shortener.UpdateURLDestinationRequest
-	1, // 3: shortener.ShortenerService.ShortenURL:output_type -> shortener.ShortenURLResponse
-	3, // 4: shortener.ShortenerService.GetOriginalURL:output_type -> shortener.GetOriginalURLResponse
-	5, // 5: shortener.ShortenerService.UpdateURLDestination:output_type -> shortener.UpdateURLDestinationResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	6, // 0: shortener.GetURLAnalyticsResponse.analytics:type_name -> shortener.AnalyticsData
+	0, // 1: shortener.ShortenerService.ShortenURL:input_type -> shortener.ShortenURLRequest
+	2, // 2: shortener.ShortenerService.GetOriginalURL:input_type -> shortener.GetOriginalURLRequest
+	4, // 3: shortener.ShortenerService.UpdateURLDestination:input_type -> shortener.UpdateURLDestinationRequest
+	7, // 4: shortener.ShortenerService.GetURLAnalytics:input_type -> shortener.GetURLAnalyticsRequest
+	1, // 5: shortener.ShortenerService.ShortenURL:output_type -> shortener.ShortenURLResponse
+	3, // 6: shortener.ShortenerService.GetOriginalURL:output_type -> shortener.GetOriginalURLResponse
+	5, // 7: shortener.ShortenerService.UpdateURLDestination:output_type -> shortener.UpdateURLDestinationResponse
+	8, // 8: shortener.ShortenerService.GetURLAnalytics:output_type -> shortener.GetURLAnalyticsResponse
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_shortener_proto_init() }
@@ -424,7 +655,7 @@ func file_shortener_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shortener_proto_rawDesc), len(file_shortener_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
