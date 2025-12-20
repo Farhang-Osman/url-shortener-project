@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
@@ -185,6 +186,41 @@ func (g *APIGateway) UpdateURLDestination(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(map[string]string{"short_code": res.GetShortCode(), "message": res.GetMessage()})
 }
 
+// GetURLAnalytics handles fetching analytics data for a short URL
+func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	shortCode := vars["shortCode"]
+
+	// Get user_id from context (set by AuthMiddleware)
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok || userID == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "User not authenticated"})
+		return
+	}
+
+	log.Printf("Received analytics request for short code: %s by user: %s\n", shortCode, userID)
+
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
+	defer cancel()
+
+	res, err := g.shortenerClient.GetURLAnalytics(ctx, &shortenerpb.GetURLAnalyticsRequest{
+		ShortCode: shortCode,
+		UserId:    userID, // Pass user ID for authorization check in Shortener Service
+	})
+	if err != nil {
+		log.Printf("Error getting URL analytics: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to retrieve analytics: %v", err)})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
 func main() {
 	// Set up gRPC connections
 	userConn, err := grpc.Dial(userServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -210,6 +246,7 @@ func main() {
 	// Authenticated routes - using individual middleware wrapping instead of subrouter
 	r.Handle("/auth/shorten", apig.AuthMiddleware(http.HandlerFunc(apig.ShortenURL))).Methods("POST")
 	r.Handle("/auth/update/{shortCode}", apig.AuthMiddleware(http.HandlerFunc(apig.UpdateURLDestination))).Methods("PUT")
+	r.Handle("/auth/analytics/{shortCode}", apig.AuthMiddleware(http.HandlerFunc(apig.GetURLAnalytics))).Methods("GET")
 
 	log.Printf("API Gateway listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

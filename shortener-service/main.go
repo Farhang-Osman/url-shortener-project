@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"time"
@@ -166,6 +168,62 @@ func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOrigina
 	return &shortenerpb.GetOriginalURLResponse{
 		LongUrl:   longURL,
 		ExpiresAt: expiresAtStr,
+	}, nil
+}
+
+func (s *server) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAnalyticsRequest) (*shortenerpb.GetURLAnalyticsResponse, error) {
+	// 1. Fetch all analytics events
+	rows, err := db.DB.Query(ctx,
+		"SELECT event_type, short_code, long_url, user_id, user_agent, referer, ip_address, timestamp FROM analytics WHERE short_code = $1 ORDER BY timestamp DESC",
+		req.GetShortCode())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "database query error: %v", err)
+	}
+	defer rows.Close()
+
+	var analytics []*shortenerpb.AnalyticsData
+	for rows.Next() {
+		var eventType, shortCode, ipAddress string
+		var timestamp time.Time
+		var tempLongURL, tempUserID, tempUserAgent, tempReferer sql.NullString
+
+		if err := rows.Scan(&eventType, &shortCode, &tempLongURL, &tempUserID, &tempUserAgent, &tempReferer, &ipAddress, &timestamp); err != nil {
+			log.Printf("Error scanning analytics row: %v", err)
+			continue
+		}
+
+		data := &shortenerpb.AnalyticsData{
+			EventType: eventType,
+			ShortCode: shortCode,
+			IpAddress: ipAddress,
+			Timestamp: timestamp.Format(time.RFC3339),
+		}
+		if tempLongURL.Valid {
+			data.LongUrl = tempLongURL.String
+		}
+		if tempUserID.Valid {
+			data.UserId = tempUserID.String
+		}
+		if tempUserAgent.Valid {
+			data.UserAgent = tempUserAgent.String
+		}
+		if tempReferer.Valid {
+			data.Referer = tempReferer.String
+		}
+
+		analytics = append(analytics, data)
+	}
+
+	// 2. Fetch total click count
+	var totalClicks int64
+	err = db.DB.QueryRow(ctx, "SELECT click_count FROM urls WHERE short_code = $1", req.GetShortCode()).Scan(&totalClicks)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		log.Printf("Error getting click count for short code %s: %v", req.GetShortCode(), err)
+	}
+
+	return &shortenerpb.GetURLAnalyticsResponse{
+		Analytics:   analytics,
+		TotalClicks: totalClicks,
 	}, nil
 }
 

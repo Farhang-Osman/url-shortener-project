@@ -1,7 +1,5 @@
-github.com/Farhang-Osman/url-shortener-project v0.0.0-20250909120117-2100e84036d8 h1:uiW4/tGGDsVOK6f5jUmNf4GHaI7vSaUdeIlnV8KtsZQ=
-github.com/Farhang-Osman/url-shortener-project v0.0.0-20250909120117-2100e84036d8/go.mod h1:WdwipBDtpC9aDYfV6HPgSIU647XUbZ9O+4CfWlsplSU=
-github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20250822173454-061879e34199 h1:aPOjYXRsAFx09zeoWarKoOz6AcYGWjH9PtLiuAlm1H8=
-github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20250822173454-061879e34199/go.mod h1:fEO+1bucM/eh+OB7oOyQiijA5KxzclklJ3eTGcTDQOY=
+github.com/Farhang-Osman/url-shortener-project v0.0.0-20251218135926-dfb4fe6d8d5b h1:j3/OcEhASB6YVxbT08jZp3DGLGu6BYTy8mAy9JMXejA=
+github.com/Farhang-Osman/url-shortener-project v0.0.0-20251218135926-dfb4fe6d8d5b/go.mod h1:WdwipBDtpC9aDYfV6HPgSIU647XUbZ9O+4CfWlsplSU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
