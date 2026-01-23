@@ -183,11 +183,12 @@ func (s *server) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAna
 
 	var analytics []*shortenerpb.AnalyticsData
 	for rows.Next() {
-		var eventType, shortCode, ipAddress string
+		var eventType, shortCode string
 		var timestamp time.Time
 		var tempLongURL, tempUserID, tempUserAgent, tempReferer sql.NullString
+		var tempIP net.IP
 
-		if err := rows.Scan(&eventType, &shortCode, &tempLongURL, &tempUserID, &tempUserAgent, &tempReferer, &ipAddress, &timestamp); err != nil {
+		if err := rows.Scan(&eventType, &shortCode, &tempLongURL, &tempUserID, &tempUserAgent, &tempReferer, &tempIP, &timestamp); err != nil {
 			log.Printf("Error scanning analytics row: %v", err)
 			continue
 		}
@@ -195,7 +196,7 @@ func (s *server) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAna
 		data := &shortenerpb.AnalyticsData{
 			EventType: eventType,
 			ShortCode: shortCode,
-			IpAddress: ipAddress,
+			IpAddress: tempIP.String(),
 			Timestamp: timestamp.Format(time.RFC3339),
 		}
 		if tempLongURL.Valid {
@@ -212,6 +213,10 @@ func (s *server) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAna
 		}
 
 		analytics = append(analytics, data)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error during analytics row iteration: %v", err)
 	}
 
 	// 2. Fetch total click count
