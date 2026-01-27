@@ -196,9 +196,14 @@ func (s *server) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAna
 		data := &shortenerpb.AnalyticsData{
 			EventType: eventType,
 			ShortCode: shortCode,
-			IpAddress: tempIP.String(),
 			Timestamp: timestamp.Format(time.RFC3339),
 		}
+		if tempIP != nil {
+			data.IpAddress = tempIP.String()
+		} else {
+			data.IpAddress = "N/A"
+		}
+
 		if tempLongURL.Valid {
 			data.LongUrl = tempLongURL.String
 		}
