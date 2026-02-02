@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -26,12 +27,14 @@ const ( // gRPC service addresses
 type APIGateway struct {
 	userClient      userpb.UserServiceClient
 	shortenerClient shortenerpb.ShortenerServiceClient
+	redisClient     *redis.Client
 }
 
-func NewAPIGateway(userConn *grpc.ClientConn, shortenerConn *grpc.ClientConn) *APIGateway {
+func NewAPIGateway(userConn *grpc.ClientConn, shortenerConn *grpc.ClientConn, redisClient *redis.Client) *APIGateway {
 	return &APIGateway{
 		userClient:      userpb.NewUserServiceClient(userConn),
 		shortenerClient: shortenerpb.NewShortenerServiceClient(shortenerConn),
+		redisClient:     redisClient,
 	}
 }
 
@@ -235,7 +238,17 @@ func main() {
 	}
 	defer shortenerConn.Close()
 
-	apig := NewAPIGateway(userConn, shortenerConn)
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+
+	ctx := context.Background()
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Fatalf("failed to connect to redis: %v", err)
+	}
+	log.Println("Connected to Redis successfully")
+
+	apig := NewAPIGateway(userConn, shortenerConn, rdb)
 
 	r := mux.NewRouter()
 
