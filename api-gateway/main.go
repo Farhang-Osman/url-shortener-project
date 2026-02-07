@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -224,6 +225,58 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// RateLimitMiddleware limits requests to 'limit' per 'window' duration
+func (g *APIGateway) RateLimitMiddleware(limit int, window time.Duration) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Safety check for nil redis client
+			if g.redisClient == nil {
+				log.Println("Error: redisClient is nil in RateLimitMiddleware")
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Identify the user. Use IP without port for consistency.
+			identifier, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				identifier = r.RemoteAddr // Fallback if SplitHostPort fails
+			}
+
+			// Override with userID if authenticated
+			if userID, ok := r.Context().Value("userID").(string); ok && userID != "" {
+				identifier = userID
+			}
+
+			key := fmt.Sprintf("rate_limit:%s", identifier)
+			ctx := r.Context()
+
+			// Increment the counter
+			count, err := g.redisClient.Incr(ctx, key).Result()
+			if err != nil {
+				log.Printf("Redis error in rate limiter: %v", err)
+				next.ServeHTTP(w, r) // Fail open to avoid blocking users on Redis failure
+				return
+			}
+
+			if count == 1 {
+				g.redisClient.Expire(ctx, key, window)
+			}
+
+			if count > int64(limit) {
+				log.Printf("Rate limit exceeded for %s (count: %d)", identifier, count)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				json.NewEncoder(w).Encode(map[string]string{
+					"error": "Rate limit exceeded. Please try again later.",
+				})
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func main() {
 	// Set up gRPC connections
 	userConn, err := grpc.Dial(userServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -252,15 +305,27 @@ func main() {
 
 	r := mux.NewRouter()
 
-	// Public routes
-	r.HandleFunc("/register", apig.RegisterUser).Methods("POST")
-	r.HandleFunc("/login", apig.LoginUser).Methods("POST")
+	publicLimit := 3 // 3 requests per minute for public routes
+	authLimit := 6   // 6 requests per minute for authenticated users
+	window := time.Minute
 
-	// Authenticated routes - using individual middleware wrapping instead of subrouter
-	r.Handle("/auth/shorten", apig.AuthMiddleware(http.HandlerFunc(apig.ShortenURL))).Methods("POST")
-	r.Handle("/auth/update/{shortCode}", apig.AuthMiddleware(http.HandlerFunc(apig.UpdateURLDestination))).Methods("PUT")
-	r.Handle("/auth/analytics/{shortCode}", apig.AuthMiddleware(http.HandlerFunc(apig.GetURLAnalytics))).Methods("GET")
+	// Public routes with rate limiting
+	r.Handle("/register", apig.RateLimitMiddleware(publicLimit, window)(http.HandlerFunc(apig.RegisterUser))).Methods("POST")
+	r.Handle("/login", apig.RateLimitMiddleware(publicLimit, window)(http.HandlerFunc(apig.LoginUser))).Methods("POST")
 
-	log.Printf("API Gateway listening on :8080")
+	// AuthMiddleware FIRST so the RateLimiter can use the userID
+	// Shorten URL
+	shortenHandler := apig.AuthMiddleware(http.HandlerFunc(apig.ShortenURL))
+	r.Handle("/auth/shorten", apig.RateLimitMiddleware(authLimit, window)(shortenHandler)).Methods("POST")
+
+	// Update URL
+	updateHandler := apig.AuthMiddleware(http.HandlerFunc(apig.UpdateURLDestination))
+	r.Handle("/auth/update/{shortCode}", apig.RateLimitMiddleware(authLimit, window)(updateHandler)).Methods("PUT")
+
+	// Get Analytics
+	analyticsHandler := apig.AuthMiddleware(http.HandlerFunc(apig.GetURLAnalytics))
+	r.Handle("/auth/analytics/{shortCode}", apig.RateLimitMiddleware(authLimit, window)(analyticsHandler)).Methods("GET")
+
+	log.Printf("API Gateway listening on :8080 with Rate Limiting enabled")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
