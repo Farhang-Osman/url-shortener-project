@@ -3,7 +3,7 @@ module github.com/Farhang-Osman/url-shortener-project/api-gateway
 go 1.24.6
 
 require (
-	github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20250822173454-061879e34199
+	github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20260214232217-567f45587bb2
 	github.com/gorilla/mux v1.8.1
 	google.golang.org/grpc v1.75.1
 )
@@ -19,4 +19,4 @@ require (
 	google.golang.org/protobuf v1.36.8 // indirect
 )
 
-replace github.com/Farhang-Osman/url-shortener-project/pkg/proto => ../pkg/proto
+// replace github.com/Farhang-Osman/url-shortener-project/pkg/proto => ../pkg/proto
