@@ -14,6 +14,7 @@ var DB *pgxpool.Pool
 func InitDB() error {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
+		log.Println("databaseURL variable is empty string")
 		databaseURL = "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable"
 	}
 
