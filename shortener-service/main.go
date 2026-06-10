@@ -52,8 +52,8 @@ func newServer() *server {
 func (s *server) ShortenURL(ctx context.Context, req *shortenerpb.ShortenURLRequest) (*shortenerpb.ShortenURLResponse, error) {
 	log.Printf("Received ShortenURL request: %v\n", req.GetLongUrl())
 
-	// Generate short code (use custom alias if provided)
 	var shortCode string
+	// Generate short code (use custom alias if provided)
 	if req.GetCustomAlias() != "" {
 		shortCode = req.GetCustomAlias()
 
@@ -91,12 +91,12 @@ func (s *server) ShortenURL(ctx context.Context, req *shortenerpb.ShortenURLRequ
 		expiresAt = parsedTime
 	}
 
-	// Insert URL into database
 	var userID *string
 	if req.GetUserId() != "" {
 		userID = &req.UserId
 	}
 
+	// Insert URL into database
 	createdAt := time.Now()
 	_, err := db.DB.Exec(ctx,
 		"INSERT INTO urls (short_code, long_url, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4, $5)",
