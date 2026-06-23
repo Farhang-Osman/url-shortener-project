@@ -23,7 +23,6 @@ const ( // gRPC service addresses
 	userServiceAddress      = "localhost:50051"
 	shortenerServiceAddress = "localhost:50052"
 	redisClientAddress      = "localhost:6379"
-	// jwtSecret               = "your-secret-key-change-this-in-production" // Must match User Service
 )
 
 type APIGateway struct {

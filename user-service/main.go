@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	db "github.com/Farhang-Osman/url-shortener-project/common/db" // Import the common db package
+	db "github.com/Farhang-Osman/url-shortener-project/common/db"
 	userpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/userpb"
 )
 
@@ -34,9 +34,8 @@ func (s *server) RegisterUser(ctx context.Context, req *userpb.RegisterUserReque
 		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err)
 	}
 
-	// Insert user into database
 	var userID string
-	// Use db.DB from the common package
+
 	err = db.DB.QueryRow(ctx,
 		"INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
 		req.GetUsername(), req.GetEmail(), hashedPassword).Scan(&userID)
@@ -58,10 +57,9 @@ func (s *server) RegisterUser(ctx context.Context, req *userpb.RegisterUserReque
 func (s *server) LoginUser(ctx context.Context, req *userpb.LoginUserRequest) (*userpb.LoginUserResponse, error) {
 	log.Printf("Received LoginUser request: %v\n", req.GetUsername())
 
-	// Get user from database
 	var userID string
-	var hashedPassword []byte // Change to []byte for bcrypt.CompareHashAndPassword
-	// Use db.DB from the common package
+	var hashedPassword []byte
+
 	err := db.DB.QueryRow(ctx,
 		"SELECT id, password_hash FROM users WHERE username = $1",
 		req.GetUsername()).Scan(&userID, &hashedPassword)
@@ -80,10 +78,12 @@ func (s *server) LoginUser(ctx context.Context, req *userpb.LoginUserRequest) (*
 	}
 
 	// Generate JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(), // 24 hours
-	})
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"user_id": userID,
+			"exp":     time.Now().Add(time.Hour * 24).Unix(), // 24 hours
+		})
 
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
