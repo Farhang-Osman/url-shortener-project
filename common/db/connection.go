@@ -18,8 +18,7 @@ func InitDB() error {
 		databaseURL = "postgres://postgres:mysecretpassword@localhost:5432/postgres?sslmode=disable"
 	}
 
-	var err error
-	DB, err = pgxpool.New(context.Background(), databaseURL)
+	DB, err := pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
 		return fmt.Errorf("unable to create connection pool: %v", err)
 	}

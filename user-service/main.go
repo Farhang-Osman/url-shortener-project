@@ -85,7 +85,7 @@ func (s *server) LoginUser(ctx context.Context, req *userpb.LoginUserRequest) (*
 			"exp":     time.Now().Add(time.Hour * 24).Unix(), // 24 hours
 		})
 
-	tokenString, err := token.SignedString([]byte(jwtSecret))
+	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate token: %v", err)
 	}
