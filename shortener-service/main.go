@@ -82,6 +82,7 @@ func (s *server) ShortenURL(ctx context.Context, req *shortenerpb.ShortenURLRequ
 	}
 
 	// Parse expires_at if provided
+
 	var expiresAt *time.Time
 	if req.GetExpiresAt() != "" {
 		parsedTime, err := parseExpiresAt(req.GetExpiresAt())
@@ -138,13 +139,11 @@ func (s *server) ShortenURL(ctx context.Context, req *shortenerpb.ShortenURLRequ
 func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOriginalURLRequest) (*shortenerpb.GetOriginalURLResponse, error) {
 	log.Printf("Received GetOriginalURL request for short code: %s\n", req.GetShortCode())
 
-	var longURL string
+	var longURL *string
 	var expiresAt *time.Time
 
 	// Query database for original URL and expiration date
-	row := db.DB.QueryRow(ctx, "SELECT long_url, expires_at FROM urls WHERE short_code = $1", req.GetShortCode())
-
-	err := row.Scan(&longURL, &expiresAt)
+	err := db.DB.QueryRow(ctx, "SELECT long_url, expires_at FROM urls WHERE short_code = $1", req.GetShortCode()).Scan(&longURL, &expiresAt)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -158,7 +157,7 @@ func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOrigina
 		return nil, status.Errorf(codes.NotFound, "short code has expired")
 	}
 
-	log.Printf("Found original URL for %s: %s", req.GetShortCode(), longURL)
+	log.Printf("Found original URL for %s: %s", req.GetShortCode(), *longURL)
 
 	var expiresAtStr string
 	if expiresAt != nil {
@@ -166,7 +165,7 @@ func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOrigina
 	}
 
 	return &shortenerpb.GetOriginalURLResponse{
-		LongUrl:   longURL,
+		LongUrl:   *longURL,
 		ExpiresAt: expiresAtStr,
 	}, nil
 }
@@ -225,6 +224,7 @@ func (s *server) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAna
 	}
 
 	// 2. Fetch total click count
+
 	var totalClicks int64
 	err = db.DB.QueryRow(ctx, "SELECT click_count FROM urls WHERE short_code = $1", req.GetShortCode()).Scan(&totalClicks)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {

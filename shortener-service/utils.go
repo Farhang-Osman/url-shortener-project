@@ -28,9 +28,6 @@ func generateShortCode() string {
 
 // parseExpiresAt parses ISO 8601 format string to time.Time
 func parseExpiresAt(expiresAtStr string) (*time.Time, error) {
-	if expiresAtStr == "" {
-		return nil, nil
-	}
 
 	t, err := time.Parse(time.RFC3339, expiresAtStr)
 	if err != nil {
