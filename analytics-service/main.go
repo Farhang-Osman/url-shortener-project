@@ -147,15 +147,6 @@ func main() {
 				log.Printf("Stored URL Clicked Event for short code: %s", event.ShortCode)
 			}
 
-			// Increment click_count in urls table
-			_, err = db.DB.Exec(ctx,
-				"UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1", event.ShortCode)
-			if err != nil {
-				log.Printf("Error incrementing click count for short code %s: %v", event.ShortCode, err)
-			} else {
-				log.Printf("Incremented click count for short code: %s", event.ShortCode)
-			}
-
 			clickReader.CommitMessages(ctx, msg)
 		}
 	}()

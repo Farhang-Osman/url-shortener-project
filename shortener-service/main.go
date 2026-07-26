@@ -36,6 +36,14 @@ type URLCreatedEvent struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type URLClickedEvent struct {
+	ShortCode string    `json:"short_code"`
+	ClickedAt time.Time `json:"clicked_at"`
+	UserAgent string    `json:"user_agent"`
+	Referer   string    `json:"referer"`
+	IPAddress string    `json:"ip_address"`
+}
+
 func newServer() *server {
 	// Initialize Kafka writer
 	writer := &kafka.Writer{
@@ -246,6 +254,52 @@ func main() {
 
 	srv := newServer()
 	defer srv.kafkaWriter.Close()
+
+	ctx := context.Background()
+
+	clickCountReader := kafka.NewReader(
+		kafka.ReaderConfig{
+			Brokers:   []string{kafkaBroker},
+			Topic:     "url-clicked-events",
+			GroupID:   "url-click-counter",
+			Partition: 0,
+			MinBytes:  10e3, // 10KB
+			MaxBytes:  10e6, // 10MB
+			MaxWait:   1 * time.Second,
+			Dialer: &kafka.Dialer{
+				Timeout:   10 * time.Second,
+				DualStack: true,
+			},
+		},
+	)
+	defer clickCountReader.Close()
+
+	go func() {
+		for {
+			msg, err := clickCountReader.FetchMessage(ctx)
+			if err != nil {
+				log.Printf("Error reading click event: %v", err)
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			var event URLClickedEvent
+			if err := json.Unmarshal(msg.Value, &event); err != nil {
+				log.Printf("Error unmarshalling click event: %v", err)
+				clickCountReader.CommitMessages(ctx, msg)
+			}
+
+			_, err = db.DB.Exec(ctx,
+				"UPDATE urls SET click_count = click_count + 1 WHERE short_code = $1", event.ShortCode)
+			if err != nil {
+				log.Printf("Error incrementing click count for short code %s: %v", event.ShortCode, err)
+			} else {
+				log.Printf("Incremented click count for short code: %s", event.ShortCode)
+			}
+
+			clickCountReader.CommitMessages(ctx, msg)
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
