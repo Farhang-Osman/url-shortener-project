@@ -9,6 +9,7 @@ service ShortenerService {
   rpc GetOriginalURL (GetOriginalURLRequest) returns (GetOriginalURLResponse);
   rpc UpdateURLDestination (UpdateURLDestinationRequest) returns (UpdateURLDestinationResponse);
   rpc GetURLAnalytics (GetURLAnalyticsRequest) returns (GetURLAnalyticsResponse);
+  rpc GetTotalClicks (GetTotalClicksRequest) returns (GetTotalClicksResponse);
 }
 
 message ShortenURLRequest {
@@ -42,7 +43,11 @@ message UpdateURLDestinationResponse {
   string message = 2;
 }
 
-message AnalyticsData {
+message GetURLAnalyticsRequest {
+  string short_code = 1;
+}
+
+message GetURLAnalyticsResponse {
   string event_type = 1;
   string short_code = 2;
   string long_url = 3; // Only for url_created events
@@ -53,12 +58,10 @@ message AnalyticsData {
   string timestamp = 8; // ISO 8601 format string
 }
 
-message GetURLAnalyticsRequest {
-  string short_code = 1;
+message GetTotalClicksRequest {
   string user_id = 2; // For authorization check
 }
 
-message GetURLAnalyticsResponse {
-  repeated AnalyticsData analytics = 1;
-  int64 total_clicks = 2;
+message GetTotalClicksResponse {
+  int64 total_clicks = 1;
 }
