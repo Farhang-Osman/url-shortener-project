@@ -23,6 +23,7 @@ const (
 	ShortenerService_GetOriginalURL_FullMethodName       = "/shortener.ShortenerService/GetOriginalURL"
 	ShortenerService_UpdateURLDestination_FullMethodName = "/shortener.ShortenerService/UpdateURLDestination"
 	ShortenerService_GetURLAnalytics_FullMethodName      = "/shortener.ShortenerService/GetURLAnalytics"
+	ShortenerService_GetTotalClicks_FullMethodName       = "/shortener.ShortenerService/GetTotalClicks"
 )
 
 // ShortenerServiceClient is the client API for ShortenerService service.
@@ -33,6 +34,7 @@ type ShortenerServiceClient interface {
 	GetOriginalURL(ctx context.Context, in *GetOriginalURLRequest, opts ...grpc.CallOption) (*GetOriginalURLResponse, error)
 	UpdateURLDestination(ctx context.Context, in *UpdateURLDestinationRequest, opts ...grpc.CallOption) (*UpdateURLDestinationResponse, error)
 	GetURLAnalytics(ctx context.Context, in *GetURLAnalyticsRequest, opts ...grpc.CallOption) (*GetURLAnalyticsResponse, error)
+	GetTotalClicks(ctx context.Context, in *GetTotalClicksRequest, opts ...grpc.CallOption) (*GetTotalClicksResponse, error)
 }
 
 type shortenerServiceClient struct {
@@ -83,6 +85,16 @@ func (c *shortenerServiceClient) GetURLAnalytics(ctx context.Context, in *GetURL
 	return out, nil
 }
 
+func (c *shortenerServiceClient) GetTotalClicks(ctx context.Context, in *GetTotalClicksRequest, opts ...grpc.CallOption) (*GetTotalClicksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTotalClicksResponse)
+	err := c.cc.Invoke(ctx, ShortenerService_GetTotalClicks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ShortenerServiceServer is the server API for ShortenerService service.
 // All implementations must embed UnimplementedShortenerServiceServer
 // for forward compatibility.
@@ -91,6 +103,7 @@ type ShortenerServiceServer interface {
 	GetOriginalURL(context.Context, *GetOriginalURLRequest) (*GetOriginalURLResponse, error)
 	UpdateURLDestination(context.Context, *UpdateURLDestinationRequest) (*UpdateURLDestinationResponse, error)
 	GetURLAnalytics(context.Context, *GetURLAnalyticsRequest) (*GetURLAnalyticsResponse, error)
+	GetTotalClicks(context.Context, *GetTotalClicksRequest) (*GetTotalClicksResponse, error)
 	mustEmbedUnimplementedShortenerServiceServer()
 }
 
@@ -112,6 +125,9 @@ func (UnimplementedShortenerServiceServer) UpdateURLDestination(context.Context,
 }
 func (UnimplementedShortenerServiceServer) GetURLAnalytics(context.Context, *GetURLAnalyticsRequest) (*GetURLAnalyticsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetURLAnalytics not implemented")
+}
+func (UnimplementedShortenerServiceServer) GetTotalClicks(context.Context, *GetTotalClicksRequest) (*GetTotalClicksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTotalClicks not implemented")
 }
 func (UnimplementedShortenerServiceServer) mustEmbedUnimplementedShortenerServiceServer() {}
 func (UnimplementedShortenerServiceServer) testEmbeddedByValue()                          {}
@@ -206,6 +222,24 @@ func _ShortenerService_GetURLAnalytics_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ShortenerService_GetTotalClicks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTotalClicksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShortenerServiceServer).GetTotalClicks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShortenerService_GetTotalClicks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShortenerServiceServer).GetTotalClicks(ctx, req.(*GetTotalClicksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ShortenerService_ServiceDesc is the grpc.ServiceDesc for ShortenerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +262,10 @@ var ShortenerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetURLAnalytics",
 			Handler:    _ShortenerService_GetURLAnalytics_Handler,
+		},
+		{
+			MethodName: "GetTotalClicks",
+			Handler:    _ShortenerService_GetTotalClicks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

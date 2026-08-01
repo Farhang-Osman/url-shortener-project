@@ -45,6 +45,7 @@ message UpdateURLDestinationResponse {
 
 message GetURLAnalyticsRequest {
   string short_code = 1;
+  string user_id = 2;
 }
 
 message GetURLAnalyticsResponse {
@@ -59,6 +60,7 @@ message GetURLAnalyticsResponse {
 }
 
 message GetTotalClicksRequest {
+  string short_code = 1;
   string user_id = 2; // For authorization check
 }
 
