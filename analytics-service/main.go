@@ -10,6 +10,7 @@ import (
 	"github.com/segmentio/kafka-go"
 
 	db "github.com/Farhang-Osman/url-shortener-project/common/db"
+	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb"
 )
 
 const (
@@ -31,6 +32,12 @@ type URLClickedEvent struct {
 	UserAgent string    `json:"user_agent"`
 	Referer   string    `json:"referer"`
 	IPAddress string    `json:"ip_address"`
+}
+
+// GetURLAnalytics fetches all analytics data for a given short code
+func GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAnalyticsRequest) (*shortenerpb.GetURLAnalyticsResponse, error) {
+	// just for now
+	return nil, nil
 }
 
 func main() {
