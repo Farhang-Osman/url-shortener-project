@@ -48,7 +48,7 @@ message GetURLAnalyticsRequest {
   string user_id = 2;
 }
 
-message GetURLAnalyticsResponse {
+message AnalyticsData {
   string event_type = 1;
   string short_code = 2;
   string long_url = 3; // Only for url_created events
@@ -57,6 +57,10 @@ message GetURLAnalyticsResponse {
   string referer = 6; // Only for url_clicked events
   string ip_address = 7;
   string timestamp = 8; // ISO 8601 format string
+}
+
+message GetURLAnalyticsResponse {
+  repeated AnalyticsData analytics = 1;
 }
 
 message GetTotalClicksRequest {

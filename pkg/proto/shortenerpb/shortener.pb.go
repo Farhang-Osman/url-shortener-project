@@ -393,7 +393,7 @@ func (x *GetURLAnalyticsRequest) GetUserId() string {
 	return ""
 }
 
-type GetURLAnalyticsResponse struct {
+type AnalyticsData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	EventType     string                 `protobuf:"bytes,1,opt,name=event_type,json=eventType,proto3" json:"event_type,omitempty"`
 	ShortCode     string                 `protobuf:"bytes,2,opt,name=short_code,json=shortCode,proto3" json:"short_code,omitempty"`
@@ -407,9 +407,102 @@ type GetURLAnalyticsResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
+func (x *AnalyticsData) Reset() {
+	*x = AnalyticsData{}
+	mi := &file_shortener_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AnalyticsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AnalyticsData) ProtoMessage() {}
+
+func (x *AnalyticsData) ProtoReflect() protoreflect.Message {
+	mi := &file_shortener_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AnalyticsData.ProtoReflect.Descriptor instead.
+func (*AnalyticsData) Descriptor() ([]byte, []int) {
+	return file_shortener_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *AnalyticsData) GetEventType() string {
+	if x != nil {
+		return x.EventType
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetShortCode() string {
+	if x != nil {
+		return x.ShortCode
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetLongUrl() string {
+	if x != nil {
+		return x.LongUrl
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetUserAgent() string {
+	if x != nil {
+		return x.UserAgent
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetReferer() string {
+	if x != nil {
+		return x.Referer
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetIpAddress() string {
+	if x != nil {
+		return x.IpAddress
+	}
+	return ""
+}
+
+func (x *AnalyticsData) GetTimestamp() string {
+	if x != nil {
+		return x.Timestamp
+	}
+	return ""
+}
+
+type GetURLAnalyticsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Analytics     []*AnalyticsData       `protobuf:"bytes,1,rep,name=analytics,proto3" json:"analytics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
 func (x *GetURLAnalyticsResponse) Reset() {
 	*x = GetURLAnalyticsResponse{}
-	mi := &file_shortener_proto_msgTypes[7]
+	mi := &file_shortener_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -421,7 +514,7 @@ func (x *GetURLAnalyticsResponse) String() string {
 func (*GetURLAnalyticsResponse) ProtoMessage() {}
 
 func (x *GetURLAnalyticsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shortener_proto_msgTypes[7]
+	mi := &file_shortener_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -434,63 +527,14 @@ func (x *GetURLAnalyticsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetURLAnalyticsResponse.ProtoReflect.Descriptor instead.
 func (*GetURLAnalyticsResponse) Descriptor() ([]byte, []int) {
-	return file_shortener_proto_rawDescGZIP(), []int{7}
+	return file_shortener_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetURLAnalyticsResponse) GetEventType() string {
+func (x *GetURLAnalyticsResponse) GetAnalytics() []*AnalyticsData {
 	if x != nil {
-		return x.EventType
+		return x.Analytics
 	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetShortCode() string {
-	if x != nil {
-		return x.ShortCode
-	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetLongUrl() string {
-	if x != nil {
-		return x.LongUrl
-	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetUserAgent() string {
-	if x != nil {
-		return x.UserAgent
-	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetReferer() string {
-	if x != nil {
-		return x.Referer
-	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetIpAddress() string {
-	if x != nil {
-		return x.IpAddress
-	}
-	return ""
-}
-
-func (x *GetURLAnalyticsResponse) GetTimestamp() string {
-	if x != nil {
-		return x.Timestamp
-	}
-	return ""
+	return nil
 }
 
 type GetTotalClicksRequest struct {
@@ -503,7 +547,7 @@ type GetTotalClicksRequest struct {
 
 func (x *GetTotalClicksRequest) Reset() {
 	*x = GetTotalClicksRequest{}
-	mi := &file_shortener_proto_msgTypes[8]
+	mi := &file_shortener_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -515,7 +559,7 @@ func (x *GetTotalClicksRequest) String() string {
 func (*GetTotalClicksRequest) ProtoMessage() {}
 
 func (x *GetTotalClicksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shortener_proto_msgTypes[8]
+	mi := &file_shortener_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -528,7 +572,7 @@ func (x *GetTotalClicksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTotalClicksRequest.ProtoReflect.Descriptor instead.
 func (*GetTotalClicksRequest) Descriptor() ([]byte, []int) {
-	return file_shortener_proto_rawDescGZIP(), []int{8}
+	return file_shortener_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetTotalClicksRequest) GetShortCode() string {
@@ -554,7 +598,7 @@ type GetTotalClicksResponse struct {
 
 func (x *GetTotalClicksResponse) Reset() {
 	*x = GetTotalClicksResponse{}
-	mi := &file_shortener_proto_msgTypes[9]
+	mi := &file_shortener_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +610,7 @@ func (x *GetTotalClicksResponse) String() string {
 func (*GetTotalClicksResponse) ProtoMessage() {}
 
 func (x *GetTotalClicksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shortener_proto_msgTypes[9]
+	mi := &file_shortener_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +623,7 @@ func (x *GetTotalClicksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTotalClicksResponse.ProtoReflect.Descriptor instead.
 func (*GetTotalClicksResponse) Descriptor() ([]byte, []int) {
-	return file_shortener_proto_rawDescGZIP(), []int{9}
+	return file_shortener_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetTotalClicksResponse) GetTotalClicks() int64 {
@@ -623,8 +667,8 @@ const file_shortener_proto_rawDesc = "" +
 	"\x16GetURLAnalyticsRequest\x12\x1d\n" +
 	"\n" +
 	"short_code\x18\x01 \x01(\tR\tshortCode\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x81\x02\n" +
-	"\x17GetURLAnalyticsResponse\x12\x1d\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\xf7\x01\n" +
+	"\rAnalyticsData\x12\x1d\n" +
 	"\n" +
 	"event_type\x18\x01 \x01(\tR\teventType\x12\x1d\n" +
 	"\n" +
@@ -636,7 +680,9 @@ const file_shortener_proto_rawDesc = "" +
 	"\areferer\x18\x06 \x01(\tR\areferer\x12\x1d\n" +
 	"\n" +
 	"ip_address\x18\a \x01(\tR\tipAddress\x12\x1c\n" +
-	"\ttimestamp\x18\b \x01(\tR\ttimestamp\"O\n" +
+	"\ttimestamp\x18\b \x01(\tR\ttimestamp\"Q\n" +
+	"\x17GetURLAnalyticsResponse\x126\n" +
+	"\tanalytics\x18\x01 \x03(\v2\x18.shortener.AnalyticsDataR\tanalytics\"O\n" +
 	"\x15GetTotalClicksRequest\x12\x1d\n" +
 	"\n" +
 	"short_code\x18\x01 \x01(\tR\tshortCode\x12\x17\n" +
@@ -663,7 +709,7 @@ func file_shortener_proto_rawDescGZIP() []byte {
 	return file_shortener_proto_rawDescData
 }
 
-var file_shortener_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_shortener_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_shortener_proto_goTypes = []any{
 	(*ShortenURLRequest)(nil),            // 0: shortener.ShortenURLRequest
 	(*ShortenURLResponse)(nil),           // 1: shortener.ShortenURLResponse
@@ -672,26 +718,28 @@ var file_shortener_proto_goTypes = []any{
 	(*UpdateURLDestinationRequest)(nil),  // 4: shortener.UpdateURLDestinationRequest
 	(*UpdateURLDestinationResponse)(nil), // 5: shortener.UpdateURLDestinationResponse
 	(*GetURLAnalyticsRequest)(nil),       // 6: shortener.GetURLAnalyticsRequest
-	(*GetURLAnalyticsResponse)(nil),      // 7: shortener.GetURLAnalyticsResponse
-	(*GetTotalClicksRequest)(nil),        // 8: shortener.GetTotalClicksRequest
-	(*GetTotalClicksResponse)(nil),       // 9: shortener.GetTotalClicksResponse
+	(*AnalyticsData)(nil),                // 7: shortener.AnalyticsData
+	(*GetURLAnalyticsResponse)(nil),      // 8: shortener.GetURLAnalyticsResponse
+	(*GetTotalClicksRequest)(nil),        // 9: shortener.GetTotalClicksRequest
+	(*GetTotalClicksResponse)(nil),       // 10: shortener.GetTotalClicksResponse
 }
 var file_shortener_proto_depIdxs = []int32{
-	0, // 0: shortener.ShortenerService.ShortenURL:input_type -> shortener.ShortenURLRequest
-	2, // 1: shortener.ShortenerService.GetOriginalURL:input_type -> shortener.GetOriginalURLRequest
-	4, // 2: shortener.ShortenerService.UpdateURLDestination:input_type -> shortener.UpdateURLDestinationRequest
-	6, // 3: shortener.ShortenerService.GetURLAnalytics:input_type -> shortener.GetURLAnalyticsRequest
-	8, // 4: shortener.ShortenerService.GetTotalClicks:input_type -> shortener.GetTotalClicksRequest
-	1, // 5: shortener.ShortenerService.ShortenURL:output_type -> shortener.ShortenURLResponse
-	3, // 6: shortener.ShortenerService.GetOriginalURL:output_type -> shortener.GetOriginalURLResponse
-	5, // 7: shortener.ShortenerService.UpdateURLDestination:output_type -> shortener.UpdateURLDestinationResponse
-	7, // 8: shortener.ShortenerService.GetURLAnalytics:output_type -> shortener.GetURLAnalyticsResponse
-	9, // 9: shortener.ShortenerService.GetTotalClicks:output_type -> shortener.GetTotalClicksResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	7,  // 0: shortener.GetURLAnalyticsResponse.analytics:type_name -> shortener.AnalyticsData
+	0,  // 1: shortener.ShortenerService.ShortenURL:input_type -> shortener.ShortenURLRequest
+	2,  // 2: shortener.ShortenerService.GetOriginalURL:input_type -> shortener.GetOriginalURLRequest
+	4,  // 3: shortener.ShortenerService.UpdateURLDestination:input_type -> shortener.UpdateURLDestinationRequest
+	6,  // 4: shortener.ShortenerService.GetURLAnalytics:input_type -> shortener.GetURLAnalyticsRequest
+	9,  // 5: shortener.ShortenerService.GetTotalClicks:input_type -> shortener.GetTotalClicksRequest
+	1,  // 6: shortener.ShortenerService.ShortenURL:output_type -> shortener.ShortenURLResponse
+	3,  // 7: shortener.ShortenerService.GetOriginalURL:output_type -> shortener.GetOriginalURLResponse
+	5,  // 8: shortener.ShortenerService.UpdateURLDestination:output_type -> shortener.UpdateURLDestinationResponse
+	8,  // 9: shortener.ShortenerService.GetURLAnalytics:output_type -> shortener.GetURLAnalyticsResponse
+	10, // 10: shortener.ShortenerService.GetTotalClicks:output_type -> shortener.GetTotalClicksResponse
+	6,  // [6:11] is the sub-list for method output_type
+	1,  // [1:6] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_shortener_proto_init() }
@@ -705,7 +753,7 @@ func file_shortener_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shortener_proto_rawDesc), len(file_shortener_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
