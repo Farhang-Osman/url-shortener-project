@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net"
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	db "github.com/Farhang-Osman/url-shortener-project/common/db"
 	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb"
@@ -18,6 +22,10 @@ const (
 	createdTopic = "url-created-events"
 	clickedTopic = "url-clicked-events"
 )
+
+type analyticsServer struct {
+	shortenerpb.UnimplementedShortenerServiceServer
+}
 
 type URLCreatedEvent struct {
 	ShortCode string    `json:"short_code"`
@@ -35,9 +43,61 @@ type URLClickedEvent struct {
 }
 
 // GetURLAnalytics fetches all analytics data for a given short code
-func GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAnalyticsRequest) (*shortenerpb.GetURLAnalyticsResponse, error) {
-	// just for now
-	return nil, nil
+func (s *analyticsServer) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAnalyticsRequest) (*shortenerpb.GetURLAnalyticsResponse, error) {
+	rows, err := db.DB.Query(ctx,
+		"SELECT event_type, short_code, long_url, user_id, user_agent, referer, ip_address, timestamp FROM analytics WHERE short_code = $1 ORDER BY timestamp DESC",
+		req.GetShortCode())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "database query error: %v", err)
+	}
+	defer rows.Close()
+
+	var analytics []*shortenerpb.AnalyticsData
+	for rows.Next() {
+		var eventType, shortCode string
+		var timestamp time.Time
+		var tempLongURL, tempUserID, tempUserAgent, tempReferer sql.NullString
+		var tempIP net.IP
+
+		if err := rows.Scan(&eventType, &shortCode, &tempLongURL, &tempUserID, &tempUserAgent, &tempReferer, &tempIP, &timestamp); err != nil {
+			log.Printf("Error scanning analytics row: %v", err)
+			continue
+		}
+
+		data := &shortenerpb.AnalyticsData{
+			EventType: eventType,
+			ShortCode: shortCode,
+			Timestamp: timestamp.Format(time.RFC3339),
+		}
+		if tempIP != nil {
+			data.IpAddress = tempIP.String()
+		} else {
+			data.IpAddress = "N/A"
+		}
+
+		if tempLongURL.Valid {
+			data.LongUrl = tempLongURL.String
+		}
+		if tempUserID.Valid {
+			data.UserId = tempUserID.String
+		}
+		if tempUserAgent.Valid {
+			data.UserAgent = tempUserAgent.String
+		}
+		if tempReferer.Valid {
+			data.Referer = tempReferer.String
+		}
+
+		analytics = append(analytics, data)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error during analytics row iteration: %v", err)
+	}
+
+	return &shortenerpb.GetURLAnalyticsResponse{
+		Analytics: analytics,
+	}, nil
 }
 
 func main() {
@@ -46,6 +106,20 @@ func main() {
 		log.Fatalf("failed to initialize database: %v", err)
 	}
 	defer db.CloseDB()
+
+	go func() {
+		lis, err := net.Listen("tcp", ":50053")
+		if err != nil {
+			log.Fatalf("failed to listen on :50053: %v", err)
+		}
+
+		grpcServer := grpc.NewServer()
+		shortenerpb.RegisterShortenerServiceServer(grpcServer, &analyticsServer{})
+		log.Printf("Analytics gRPC service listening at %v", lis.Addr())
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Printf("failed to serve gRPC: %v", err)
+		}
+	}()
 
 	log.Println("Analytics Service started. Waiting for messages...")
 

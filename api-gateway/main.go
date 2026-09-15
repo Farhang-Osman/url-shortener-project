@@ -22,19 +22,22 @@ import (
 const ( // gRPC service addresses
 	userServiceAddress      = "localhost:50051"
 	shortenerServiceAddress = "localhost:50052"
+	analyticsServiceAddress = "localhost:50053"
 	redisClientAddress      = "localhost:6379"
 )
 
 type APIGateway struct {
 	userClient      userpb.UserServiceClient
 	shortenerClient shortenerpb.ShortenerServiceClient
+	analyticsClient shortenerpb.ShortenerServiceClient
 	redisClient     *redis.Client
 }
 
-func NewAPIGateway(userConn *grpc.ClientConn, shortenerConn *grpc.ClientConn, redisClient *redis.Client) *APIGateway {
+func NewAPIGateway(userConn *grpc.ClientConn, shortenerConn *grpc.ClientConn, analyticsConn *grpc.ClientConn, redisClient *redis.Client) *APIGateway {
 	return &APIGateway{
 		userClient:      userpb.NewUserServiceClient(userConn),
 		shortenerClient: shortenerpb.NewShortenerServiceClient(shortenerConn),
+		analyticsClient: shortenerpb.NewShortenerServiceClient(analyticsConn),
 		redisClient:     redisClient,
 	}
 }
@@ -209,7 +212,7 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
 	defer cancel()
 
-	res, err := g.shortenerClient.GetURLAnalytics(ctx, &shortenerpb.GetURLAnalyticsRequest{
+	res, err := g.analyticsClient.GetURLAnalytics(ctx, &shortenerpb.GetURLAnalyticsRequest{
 		ShortCode: shortCode,
 		UserId:    userID, // Pass user ID for authorization check in Shortener Service
 	})
@@ -217,12 +220,30 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting URL analytics: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to retrieve analytics: %v", err)})
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to retrieve URL analytics: %v", err)})
 		return
 	}
 
+	totalClicksRes, err := g.shortenerClient.GetTotalClicks(ctx, &shortenerpb.GetTotalClicksRequest{
+		ShortCode: shortCode,
+		UserId:    userID, // Pass user ID for authorization check in Shortener Service
+	})
+
+	if err != nil {
+		log.Printf("Error getting total clicks analytics: %v", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to retrieve total clicks analytics: %v", err)})
+		return
+	}
+
+	fmt.Println("res ", res)
+	fmt.Println("totalClicksRes ", totalClicksRes)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
+
+	fmt.Println("json.NewEncoder(w).Encode(res) ", res)
 }
 
 // RateLimitMiddleware limits requests to 'limit' per 'window' duration
@@ -291,6 +312,12 @@ func main() {
 	}
 	defer shortenerConn.Close()
 
+	analyticsConn, err := grpc.Dial(analyticsServiceAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect to analytics service: %v", err)
+	}
+	defer analyticsConn.Close()
+
 	rdb := redis.NewClient(&redis.Options{
 		Addr: redisClientAddress,
 	})
@@ -301,7 +328,7 @@ func main() {
 	}
 	log.Println("Connected to Redis successfully")
 
-	apig := NewAPIGateway(userConn, shortenerConn, rdb)
+	apig := NewAPIGateway(userConn, shortenerConn, analyticsConn, rdb)
 
 	r := mux.NewRouter()
 
