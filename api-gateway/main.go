@@ -212,7 +212,7 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*5)
 	defer cancel()
 
-	res, err := g.analyticsClient.GetURLAnalytics(ctx, &shortenerpb.GetURLAnalyticsRequest{
+	URLAnalyticsRes, err := g.analyticsClient.GetURLAnalytics(ctx, &shortenerpb.GetURLAnalyticsRequest{
 		ShortCode: shortCode,
 		UserId:    userID, // Pass user ID for authorization check in Shortener Service
 	})
@@ -237,13 +237,16 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("res ", res)
-	fmt.Println("totalClicksRes ", totalClicksRes)
+	response := struct {
+		Analytics   []*shortenerpb.AnalyticsData `json:"analytics"`
+		TotalClicks int64                        `json:"total_clicks"`
+	}{
+		Analytics:   URLAnalyticsRes.GetAnalytics(),
+		TotalClicks: totalClicksRes.GetTotalClicks(),
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
-
-	fmt.Println("json.NewEncoder(w).Encode(res) ", res)
+	json.NewEncoder(w).Encode(response)
 }
 
 // RateLimitMiddleware limits requests to 'limit' per 'window' duration
