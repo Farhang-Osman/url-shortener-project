@@ -180,8 +180,15 @@ func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOrigina
 func (s *server) GetTotalClicks(ctx context.Context, req *shortenerpb.GetTotalClicksRequest) (*shortenerpb.GetTotalClicksResponse, error) {
 	var totalClicks int64
 	err := db.DB.QueryRow(ctx, "SELECT click_count FROM urls WHERE short_code = $1", req.GetShortCode()).Scan(&totalClicks)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Short code does not exist; treat as zero clicks to preserve
+			// existing behavior for unknown codes.
+			return &shortenerpb.GetTotalClicksResponse{TotalClicks: 0}, nil
+		}
 		log.Printf("Error getting click count for short code %s: %v", req.GetShortCode(), err)
+		return nil, status.Errorf(codes.Internal, "database error: %v", err)
 	}
 
 	return &shortenerpb.GetTotalClicksResponse{
