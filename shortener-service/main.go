@@ -179,16 +179,19 @@ func (s *server) GetOriginalURL(ctx context.Context, req *shortenerpb.GetOrigina
 
 func (s *server) GetTotalClicks(ctx context.Context, req *shortenerpb.GetTotalClicksRequest) (*shortenerpb.GetTotalClicksResponse, error) {
 	var totalClicks int64
-	err := db.DB.QueryRow(ctx, "SELECT click_count FROM urls WHERE short_code = $1", req.GetShortCode()).Scan(&totalClicks)
+	var ownerID *string
+	err := db.DB.QueryRow(ctx, "SELECT click_count, user_id FROM urls WHERE short_code = $1", req.GetShortCode()).Scan(&totalClicks, &ownerID)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			// Short code does not exist; treat as zero clicks to preserve
-			// existing behavior for unknown codes.
-			return &shortenerpb.GetTotalClicksResponse{TotalClicks: 0}, nil
+			return nil, status.Errorf(codes.NotFound, "not found or not authorized")
 		}
 		log.Printf("Error getting click count for short code %s: %v", req.GetShortCode(), err)
 		return nil, status.Errorf(codes.Internal, "database error: %v", err)
+	}
+
+	if ownerID == nil || *ownerID != req.GetUserId() {
+		return nil, status.Errorf(codes.NotFound, "not found or not authorized")
 	}
 
 	return &shortenerpb.GetTotalClicksResponse{
