@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/segmentio/kafka-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -44,6 +46,20 @@ type URLClickedEvent struct {
 
 // GetURLAnalytics fetches all analytics data for a given short code
 func (s *analyticsServer) GetURLAnalytics(ctx context.Context, req *shortenerpb.GetURLAnalyticsRequest) (*shortenerpb.GetURLAnalyticsResponse, error) {
+	var ownerID *string
+	err := db.DB.QueryRow(ctx,
+		"SELECT user_id FROM analytics WHERE short_code = $1 AND event_type = 'url_created'",
+		req.GetShortCode()).Scan(&ownerID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "not found")
+		}
+		return nil, status.Errorf(codes.Internal, "database query error: %v", err)
+	}
+	if ownerID == nil || *ownerID != req.GetUserId() {
+		return nil, status.Errorf(codes.NotFound, "not found")
+	}
+
 	rows, err := db.DB.Query(ctx,
 		"SELECT event_type, short_code, long_url, user_id, user_agent, referer, ip_address, timestamp FROM analytics WHERE short_code = $1 ORDER BY timestamp DESC",
 		req.GetShortCode())
