@@ -13,7 +13,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	shortenerpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/shortenerpb"
 	userpb "github.com/Farhang-Osman/url-shortener-project/pkg/proto/userpb"
@@ -214,12 +216,19 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 
 	URLAnalyticsRes, err := g.analyticsClient.GetURLAnalytics(ctx, &shortenerpb.GetURLAnalyticsRequest{
 		ShortCode: shortCode,
-		UserId:    userID, // Pass user ID for authorization check in Shortener Service
+		UserId:    userID, // Pass user ID for authorization check in Analytics Service
 	})
 	if err != nil {
 		log.Printf("Error getting URL analytics: %v", err)
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
+		switch status.Code(err) {
+		case codes.NotFound:
+			w.WriteHeader(http.StatusNotFound)
+		case codes.PermissionDenied:
+			w.WriteHeader(http.StatusForbidden)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to retrieve URL analytics: %v", err)})
 		return
 	}
@@ -229,20 +238,22 @@ func (g *APIGateway) GetURLAnalytics(w http.ResponseWriter, r *http.Request) {
 		UserId:    userID, // Pass user ID for authorization check in Shortener Service
 	})
 
+	// Represent total_clicks as a nullable pointer so it serializes to
+	// JSON null when the lookup fails.
+	var totalClicks *int64
 	if err != nil {
-		log.Printf("Error getting total clicks analytics: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Failed to retrieve total clicks analytics: %v", err)})
-		return
+		log.Printf("Could not retrieve total clicks for short code %s: %v", shortCode, err)
+	} else {
+		v := totalClicksRes.GetTotalClicks()
+		totalClicks = &v
 	}
 
 	response := struct {
 		Analytics   []*shortenerpb.AnalyticsData `json:"analytics"`
-		TotalClicks int64                        `json:"total_clicks"`
+		TotalClicks *int64                       `json:"total_clicks"`
 	}{
 		Analytics:   URLAnalyticsRes.GetAnalytics(),
-		TotalClicks: totalClicksRes.GetTotalClicks(),
+		TotalClicks: totalClicks,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
