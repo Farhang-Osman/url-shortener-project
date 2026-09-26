@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/Farhang-Osman/url-shortener-project v0.0.0-20251218135926-dfb4fe6d8d5b
-	github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20250822173454-061879e34199
+	github.com/Farhang-Osman/url-shortener-project/pkg/proto v0.0.0-20260920205525-f950d8f0a1db
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/segmentio/kafka-go v0.4.49
 	google.golang.org/grpc v1.75.0
@@ -27,5 +27,3 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/protobuf v1.36.8 // indirect
 )
-
-replace github.com/Farhang-Osman/url-shortener-project/pkg/proto => ../pkg/proto
